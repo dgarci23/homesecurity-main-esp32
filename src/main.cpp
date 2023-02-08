@@ -14,19 +14,19 @@
 #include <WiFi.h>
 #include <api.h>
 
-// Replace with your network credentials (STATION)
-const char* ssid = "ND-guest";
+#define SSID "ND-guest"
+
 
 // Structure example to receive data
 // Must match the sender structure
 typedef struct struct_message {
   int id;
-  float temp;
-  float hum;
-  unsigned int readingId;
+  int value;
 } struct_message;
 
 struct_message incomingReadings;
+
+int update = 0;
 
 // callback function that will be executed when data is received
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) { 
@@ -38,11 +38,10 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
   Serial.println(macStr);
   memcpy(&incomingReadings, incomingData, sizeof(incomingReadings));
   
-  Serial.printf("Board ID %u: %u bytes\n", incomingReadings.id, len);
-  Serial.printf("t value: %4.2f \n", incomingReadings.temp);
-  Serial.printf("h value: %4.2f \n", incomingReadings.hum);
-  Serial.printf("readingID value: %d \n", incomingReadings.readingId);
+  Serial.printf("Board ID %u: %u bytes\n %u value", incomingReadings.id, len, incomingReadings.value);
   Serial.println();
+  update = 1;
+
 }
 
 void setup() {
@@ -53,7 +52,7 @@ void setup() {
   WiFi.mode(WIFI_AP_STA);
   
   // Set device as a Wi-Fi Station
-  WiFi.begin(ssid);
+  WiFi.begin(SSID);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     Serial.println("Setting as a Wi-Fi Station..");
@@ -69,16 +68,20 @@ void setup() {
     return;
   }
   
-  // Once ESPNow is successfully Init, we will register for recv CB to
   // get recv packer info
   esp_now_register_recv_cb(OnDataRecv);
 }
+
+
  
 void loop() {
   static unsigned long lastEventTime = millis();
   static const unsigned long EVENT_INTERVAL_MS = 5000;
   if ((millis() - lastEventTime) > EVENT_INTERVAL_MS) {
     lastEventTime = millis();
-    updateSensor("dgarci23", "1", "triggered");
+    if (update == 1) {
+      updateSensor("dgarci23", "1", "triggered");
+      update = 0;
+    }
   }
 }
