@@ -3,6 +3,8 @@
 #include <WiFi.h>
 #include <api.h>
 #include <EEPROM.h>
+#include "freertos/queue.h"
+#include <string.h>
 
 #define SSID "ND-guest"
 
@@ -16,7 +18,7 @@ typedef struct struct_message {
 struct_message incomingReadings;
 
 String ssid;
-int update[] = {0,0};
+QueueHandle_t queue = xQueueCreate(10, sizeof(short));
 
 // callback function that will be executed when data is received
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) { 
@@ -30,8 +32,8 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
   
   Serial.printf("Board ID %u: %u bytes\n %u value", incomingReadings.id, len, incomingReadings.value);
   Serial.println();
-  update[incomingReadings.id] = 1;
-
+  short id = incomingReadings.id;
+  xQueueSend(queue, &id, (TickType_t)0); 
 }
 
 void getConfig() {
@@ -83,9 +85,10 @@ void loop() {
   static const unsigned long EVENT_INTERVAL_MS = 2000;
   if ((millis() - lastEventTime) > EVENT_INTERVAL_MS) {
     lastEventTime = millis();
-    if (update[1]==1) {
-      updateSensor("dgarci23", "1", "triggered");
-      update[1] = 0;
+    short id;
+    if (uxQueueMessagesWaiting(queue)!=0) {
+      xQueueReceive(queue, &id, 0);
+      updateSensor("dgarci23", String(id), "triggered");
     }
   }
 }
