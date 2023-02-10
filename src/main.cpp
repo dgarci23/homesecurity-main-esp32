@@ -1,14 +1,3 @@
-/*
-  Rui Santos
-  Complete project details at https://RandomNerdTutorials.com/esp32-esp-now-wi-fi-web-server/
-  
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files.
-  
-  The above copyright notice and this permission notice shall be included in all
-  copies or substantial portions of the Software.
-*/
-
 #include <Arduino.h>
 #include <esp_now.h>
 #include <WiFi.h>
@@ -16,7 +5,6 @@
 #include <EEPROM.h>
 
 #define SSID "ND-guest"
-
 
 // Structure example to receive data
 // Must match the sender structure
