@@ -4,7 +4,7 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 
-void configureWiFi(const char* ssid);
+void configureWiFi(String ssid);
 String connectApi(String path, String method);
 String getUser(String userId);
 String getSensors(String userId);
