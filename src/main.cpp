@@ -88,7 +88,7 @@ void loop() {
     short id;
     if (uxQueueMessagesWaiting(queue)!=0) {
       xQueueReceive(queue, &id, 0);
-      updateSensor("dgarci23", String(id), "triggered");
+      updateSensor("dgarci23", String(id));
     }
   }
 }

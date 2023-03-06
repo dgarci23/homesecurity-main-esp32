@@ -26,6 +26,7 @@ String connectApi(String path, const char* method) {
       http.begin(serverPath.c_str());
       //http.setAuthorization("REPLACE_WITH_SERVER_USERNAME", "REPLACE_WITH_SERVER_PASSWORD");
       
+      http.addHeader("sensorId", "1");
       // Send HTTP GET request
       int httpResponseCode = http.sendRequest(method,"");
       //int httpResponseCode = http.GET();
@@ -59,6 +60,6 @@ String getSensors(String userId){
     return connectApi("/sensor/"+userId, "GET");
 }
 
-void updateSensor(String userId, String sensorId, String sensorStatus){
-    connectApi("/sensor/"+userId+"?sensorId="+sensorId+"&sensorStatus="+sensorStatus, "PUT");
+void updateSensor(String userId, String sensorId){
+    connectApi("/hub/sensor/"+userId, "PUT");
 }

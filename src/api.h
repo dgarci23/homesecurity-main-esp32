@@ -8,5 +8,5 @@ void configureWiFi(String ssid);
 String connectApi(String path, String method);
 String getUser(String userId);
 String getSensors(String userId);
-void updateSensor(String userId, String sensorId, String sensorStatus);
+void updateSensor(String userId, String sensorId);
 #endif
