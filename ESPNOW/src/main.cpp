@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <esp_now.h>
 #include <WiFi.h>
-#include <api.h>
 #include <EEPROM.h>
 #include "freertos/queue.h"
 #include <string.h>
@@ -13,7 +12,7 @@
 // Must match the sender structure
 typedef struct struct_message {
   int id;
-  int value;
+  bool battery;
 } struct_message;
 
 struct_message incomingReadings;
@@ -31,8 +30,9 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
   Serial.println(macStr);
   memcpy(&incomingReadings, incomingData, sizeof(incomingReadings));
   
-  Serial.printf("Board ID %u: %u bytes\n %u value\n", incomingReadings.id, len, incomingReadings.value);
+  Serial.printf("Board ID %u: %u bytes\n %u battery\n", incomingReadings.id, len, incomingReadings.battery);
   int id = incomingReadings.id;
+  id = (id << 1) | incomingReadings.battery;
   xQueueSend(queue, &id, (TickType_t)0); 
 }
 
@@ -79,7 +79,7 @@ void loop() {
       Wire.beginTransmission(0x0a);
       Wire.print(id);
       Wire.endTransmission();
-      Serial.printf("I2C Transmission with ID: %x", id);
+      Serial.printf("I2C Transmission with ID: %x\n", id);
     }
   }
 }

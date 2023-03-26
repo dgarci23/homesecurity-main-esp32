@@ -60,6 +60,6 @@ String getSensors(String userId){
     return connectApi("/sensor/"+userId, "GET");
 }
 
-void updateSensor(String userId, String sensorId){
+void triggerSensor(String userId, String sensorId){
     connectApi("/hub/sensor/"+userId, "PUT", sensorId);
 }

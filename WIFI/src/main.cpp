@@ -8,34 +8,10 @@
 #include <Wire.h>
 
 #define SSID "ND-guest"
-
-// Structure example to receive data
-// Must match the sender structure
-typedef struct struct_message {
-  int id;
-  int value;
-} struct_message;
-
-struct_message incomingReadings;
+#define USERID "dgarci23"
 
 String ssid;
 QueueHandle_t queue = xQueueCreate(10, sizeof(int));
-
-// callback function that will be executed when data is received
-void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) { 
-  // Copies the sender mac address to a string
-  char macStr[18];
-  Serial.print("Packet received from: ");
-  snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-           mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-  Serial.println(macStr);
-  memcpy(&incomingReadings, incomingData, sizeof(incomingReadings));
-  
-  Serial.printf("Board ID %u: %u bytes\n %u value", incomingReadings.id, len, incomingReadings.value);
-  Serial.println();
-  short id = incomingReadings.id;
-  xQueueSend(queue, &id, (TickType_t)0); 
-}
 
 void getConfig() {
   ssid = EEPROM.readString(0);
@@ -53,16 +29,6 @@ void receiveEvent(int len) {
     id = (id << 8) | Wire.read();
   }
   xQueueSend(queue, &id, (TickType_t)0);
-  //Serial.printf("Device id: %x\n", id);
-}
-
-void requestEvent()
-{
-  static char c = '0';
-  Serial.println("Transmission");
-  Wire.print(c);
-  if (c > 'z')
-    c = '0';
 }
 
 void setup() {
@@ -89,8 +55,7 @@ void setup() {
   Serial.println(WiFi.channel());
 
   // I2C Setup
-  Wire.begin(0x0a ,12,14, 0U);
-  Wire.onRequest(requestEvent);
+  Wire.begin(0x0a, 12, 14, 0U);
   Wire.onReceive(receiveEvent);
 }
 
@@ -102,10 +67,17 @@ void loop() {
   if ((millis() - lastEventTime) > EVENT_INTERVAL_MS) {
     lastEventTime = millis();
     int id;
+    bool battery;
     if (uxQueueMessagesWaiting(queue)!=0) {
       xQueueReceive(queue, &id, 0);
-      Serial.printf("Sensor %x triggered\n", id);
-      updateSensor("dgarci23", String(id));
+      battery = id & 0x1;
+      id = id >> 1;
+      if (battery) {
+        Serial.printf("Sensor %x triggered.\n", id);
+        triggerSensor(USERID, String(id));
+      } else {
+        Serial.printf("Sensor %x. Low battery.\n", id);
+      }
     }
   }
 }
