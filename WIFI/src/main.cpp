@@ -8,7 +8,9 @@
 #include <Wire.h>
 #include <initial.h>
 
-#define USERID "dgarci23"
+#define TRIGGER 0
+#define BATTERY 1
+#define LOW_BATTERY 2
 
 typedef struct struct_message {
   int id;
@@ -28,7 +30,6 @@ void receiveEvent(int len) {
 }
 
 void setup() {
-  // Serial port for debugging purposes
   Serial.begin(115200);
 
   initSPIFFS();
@@ -37,8 +38,8 @@ void setup() {
   readFile();
 
   if(initWiFi()) {
-    Serial.println("Setup finished");
     // I2C Setup
+    Serial.printf("I2C Setup.\n");
     Wire.begin(0x0a, 12, 14, 0U);
     Wire.onReceive(receiveEvent);
   }
@@ -55,14 +56,15 @@ void loop() {
     struct_message message;
     if (uxQueueMessagesWaiting(queue)!=0) {
       xQueueReceive(queue, &message, 0);
-      if (message.battery == 0) {
+      if (message.battery == TRIGGER) {
         Serial.printf("Sensor %x triggered.\n", message.id);
         triggerSensor(USERID, String(message.id));
-      } else if (message.battery == 1) {
-        batterySensor(USERID, String(message.id), "true");
+      } else if (message.battery == BATTERY) {
+        Serial.printf("Sensor %x. High battery.\n", message.id);
+        batterySensor(getUserId(), String(message.id), "true");
       } else {
-        batterySensor(USERID, String(message.id), "false");
         Serial.printf("Sensor %x. Low battery.\n", message.id);
+        batterySensor(getUserId(), String(message.id), "false");
       }
     }
   }

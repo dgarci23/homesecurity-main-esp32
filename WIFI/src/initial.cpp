@@ -19,13 +19,20 @@ AsyncWebServer server(80);
 // Search for parameter in HTTP POST request
 const char* PARAM_INPUT_1 = "ssid";
 const char* PARAM_INPUT_2 = "pass";
+const char* PARAM_INPUT_3 = "userId";
 
 // File paths to save input values permanently
 const char* ssidPath = "/ssid.txt";
 const char* passPath = "/pass.txt";
+const char* userIdPath = "/userId.txt";
 
 String ssid;
 String pass;
+String userId;
+
+void getUserId() {
+  return userId;
+}
 
 // Initialize SPIFFS
 void initSPIFFS() {
@@ -92,29 +99,23 @@ bool initWiFi() {
     }
   }
 
-  Serial.println(WiFi.localIP());
   return true;
 }
-
-
 
 void readFile() {
     ssid = readFile(SPIFFS, ssidPath);
     pass = readFile(SPIFFS, passPath);
-    Serial.println(ssid);
-    Serial.println(pass);
+    userId = readFile(SPIFFS, userIdPath);
+    Serial.printf("SSID: %s, Password: %s, User ID: %s\n");
 }
 
 // Initial Config
 void initialConfig() {
-    // Connect to Wi-Fi network with SSID and password
-    Serial.println("Setting AP (Access Point)");
-    // NULL sets an open Access Point
-    WiFi.softAP("ESP-WIFI-MANAGER", NULL);
 
+    // Setting Soft AP
+    WiFi.softAP("ESP-WIFI-MANAGER", NULL);
     IPAddress IP = WiFi.softAPIP();
-    Serial.print("AP IP address: ");
-    Serial.println(IP); 
+    Serial.printf("AP IP address: %s\n", IP);
 
     // Web Server Root URL
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -131,22 +132,24 @@ void initialConfig() {
           // HTTP POST ssid value
           if (p->name() == PARAM_INPUT_1) {
             ssid = p->value().c_str();
-            Serial.print("SSID set to: ");
-            Serial.println(ssid);
-            // Write file to save value
+            Serial.print("SSID set to: %s\n", ssid);
             writeFile(SPIFFS, ssidPath, ssid.c_str());
           }
           // HTTP POST pass value
           if (p->name() == PARAM_INPUT_2) {
             pass = p->value().c_str();
-            Serial.print("Password set to: ");
-            Serial.println(pass);
-            // Write file to save value
+            Serial.printf("Password set to: %s\n", pass);
             writeFile(SPIFFS, passPath, pass.c_str());
+          }
+          // HTTP POST user id value
+          if (p->name() == PARAM_INPUT_2) {
+            userId = p->value().c_str();
+            Serial.printf("User ID set to: %s\n", userId);
+            writeFile(SPIFFS, userIdPath, userId.c_str());
           }
         }
       }
-      request->send(200, "text/plain", "Done. ESP will restart.");
+      request->send(200, "text/plain", "Home Security Hub configured.");
       delay(3000);
       ESP.restart();
     });
