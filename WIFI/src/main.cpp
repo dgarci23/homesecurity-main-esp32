@@ -6,11 +6,9 @@
 #include "freertos/queue.h"
 #include <string.h>
 #include <Wire.h>
+#include <initial.h>
 
-#define SSID "ND-guest"
 #define USERID "dgarci23"
-
-String ssid;
 
 typedef struct struct_message {
   int id;
@@ -18,16 +16,6 @@ typedef struct struct_message {
 } struct_message;
 
 QueueHandle_t queue = xQueueCreate(10, sizeof(struct_message));
-
-void getConfig() {
-  ssid = EEPROM.readString(0);
-}
-
-void saveInitialConfig() {
-  EEPROM.writeString(0, SSID);
-  EEPROM.commit();
-  Serial.println("Configuration data persisted.");
-}
 
 void receiveEvent(int len) {
   struct_message message;
@@ -40,35 +28,25 @@ void receiveEvent(int len) {
 }
 
 void setup() {
-  // Initialize Serial Monitor
+  // Serial port for debugging purposes
   Serial.begin(115200);
-  
 
-  EEPROM.begin(32);
-  saveInitialConfig(); // Should be passed in the INITIAL CONFIG
-  getConfig();
+  initSPIFFS();
 
-  // Set the device as a Station and Soft Access Point simultaneously
-  WiFi.mode(WIFI_AP);
-  
-  // Set device as a Wi-Fi Station
-  WiFi.begin(ssid.c_str());
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.println("Connecting to the WiFi..");
+  // Load values saved in SPIFFS
+  readFile();
+
+  if(initWiFi()) {
+    Serial.println("Setup finished");
+    // I2C Setup
+    Wire.begin(0x0a, 12, 14, 0U);
+    Wire.onReceive(receiveEvent);
   }
-  Serial.print("Station IP Address: ");
-  Serial.println(WiFi.localIP());
-  Serial.print("Wi-Fi Channel: ");
-  Serial.println(WiFi.channel());
-
-  // I2C Setup
-  Wire.begin(0x0a, 12, 14, 0U);
-  Wire.onReceive(receiveEvent);
+  else {
+    initialConfig();
+  }
 }
-
-
- 
+  
 void loop() {
   static unsigned long lastEventTime = millis();
   static const unsigned long EVENT_INTERVAL_MS = 2000;
