@@ -9,4 +9,5 @@ String connectApi(String path, String method);
 String getUser(String userId);
 String getSensors(String userId);
 void triggerSensor(String userId, String sensorId);
+String batterySensor(String userId, String sensorId, String batteryStatus);
 #endif

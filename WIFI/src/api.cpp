@@ -63,3 +63,32 @@ String getSensors(String userId){
 void triggerSensor(String userId, String sensorId){
     connectApi("/hub/sensor/"+userId, "PUT", sensorId);
 }
+
+String batterySensor(String userId, String sensorId, String batteryStatus){
+  String payload;
+  if(WiFi.status()== WL_CONNECTED){
+    HTTPClient http;
+
+    String serverPath = serverName + "/battery/" + userId;
+    http.begin(serverPath.c_str());
+    //http.setAuthorization("REPLACE_WITH_SERVER_USERNAME", "REPLACE_WITH_SERVER_PASSWORD");
+    
+    http.addHeader("sensorId", sensorId);
+    http.addHeader("battery", batteryStatus);
+    // Send HTTP GET request
+    int httpResponseCode = http.sendRequest("PUT","");
+    
+    if (httpResponseCode>0) {
+      payload = http.getString();
+    }
+    else {
+      payload = "Error";
+    }
+    // Free resources
+    http.end();
+  }
+  else {
+      payload = "WiFi Disconnected";
+  }
+  return payload;
+}

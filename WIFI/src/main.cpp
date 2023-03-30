@@ -11,7 +11,13 @@
 #define USERID "dgarci23"
 
 String ssid;
-QueueHandle_t queue = xQueueCreate(10, sizeof(int));
+
+typedef struct struct_message {
+  int id;
+  int battery;
+} struct_message;
+
+QueueHandle_t queue = xQueueCreate(10, sizeof(struct_message));
 
 void getConfig() {
   ssid = EEPROM.readString(0);
@@ -24,11 +30,13 @@ void saveInitialConfig() {
 }
 
 void receiveEvent(int len) {
-  int id = 0;
-  while (Wire.available()){
-    id = (id << 8) | Wire.read();
-  }
-  xQueueSend(queue, &id, (TickType_t)0);
+  struct_message message;
+  int id = Wire.read();
+  int battery = Wire.read();
+  message.id = id;
+  message.battery = battery;
+  Serial.printf("id: %x, battery: %x\n", id, battery);
+  xQueueSend(queue, &message, (TickType_t)0);
 }
 
 void setup() {
@@ -66,17 +74,17 @@ void loop() {
   static const unsigned long EVENT_INTERVAL_MS = 2000;
   if ((millis() - lastEventTime) > EVENT_INTERVAL_MS) {
     lastEventTime = millis();
-    int id;
-    bool battery;
+    struct_message message;
     if (uxQueueMessagesWaiting(queue)!=0) {
-      xQueueReceive(queue, &id, 0);
-      battery = id & 0x1;
-      id = id >> 1;
-      if (battery) {
-        Serial.printf("Sensor %x triggered.\n", id);
-        triggerSensor(USERID, String(id));
+      xQueueReceive(queue, &message, 0);
+      if (message.battery == 0) {
+        Serial.printf("Sensor %x triggered.\n", message.id);
+        triggerSensor(USERID, String(message.id));
+      } else if (message.battery == 1) {
+        batterySensor(USERID, String(message.id), "true");
       } else {
-        Serial.printf("Sensor %x. Low battery.\n", id);
+        batterySensor(USERID, String(message.id), "false");
+        Serial.printf("Sensor %x. Low battery.\n", message.id);
       }
     }
   }
