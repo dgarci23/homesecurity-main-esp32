@@ -58,7 +58,7 @@ void loop() {
       xQueueReceive(queue, &message, 0);
       if (message.battery == TRIGGER) {
         Serial.printf("Sensor %x triggered.\n", message.id);
-        triggerSensor(USERID, String(message.id));
+        triggerSensor(getUserId(), String(message.id));
       } else if (message.battery == BATTERY) {
         Serial.printf("Sensor %x. High battery.\n", message.id);
         batterySensor(getUserId(), String(message.id), "true");

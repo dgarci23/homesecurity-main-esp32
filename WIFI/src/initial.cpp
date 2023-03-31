@@ -30,7 +30,7 @@ String ssid;
 String pass;
 String userId;
 
-void getUserId() {
+String getUserId() {
   return userId;
 }
 
@@ -72,7 +72,7 @@ void writeFile(fs::FS &fs, const char * path, const char * message){
   if(file.print(message)){
     Serial.println("- file written");
   } else {
-    Serial.println("- frite failed");
+    Serial.println("- write failed");
   }
 }
 
@@ -106,7 +106,7 @@ void readFile() {
     ssid = readFile(SPIFFS, ssidPath);
     pass = readFile(SPIFFS, passPath);
     userId = readFile(SPIFFS, userIdPath);
-    Serial.printf("SSID: %s, Password: %s, User ID: %s\n");
+    Serial.printf("SSID: %s, Password: %s, User ID: %s\n", ssid.c_str(), pass.c_str(), userId.c_str());
 }
 
 // Initial Config
@@ -115,7 +115,6 @@ void initialConfig() {
     // Setting Soft AP
     WiFi.softAP("ESP-WIFI-MANAGER", NULL);
     IPAddress IP = WiFi.softAPIP();
-    Serial.printf("AP IP address: %s\n", IP);
 
     // Web Server Root URL
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -132,7 +131,7 @@ void initialConfig() {
           // HTTP POST ssid value
           if (p->name() == PARAM_INPUT_1) {
             ssid = p->value().c_str();
-            Serial.print("SSID set to: %s\n", ssid);
+            Serial.printf("SSID set to: %s\n", ssid.c_str());
             writeFile(SPIFFS, ssidPath, ssid.c_str());
           }
           // HTTP POST pass value
@@ -142,7 +141,7 @@ void initialConfig() {
             writeFile(SPIFFS, passPath, pass.c_str());
           }
           // HTTP POST user id value
-          if (p->name() == PARAM_INPUT_2) {
+          if (p->name() == PARAM_INPUT_3) {
             userId = p->value().c_str();
             Serial.printf("User ID set to: %s\n", userId);
             writeFile(SPIFFS, userIdPath, userId.c_str());

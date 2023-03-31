@@ -3,7 +3,6 @@
 #include <WiFi.h>
 #include "freertos/queue.h"
 #include <string.h>
-#include <initial.h>
 #include <Wire.h>
 
 // Structure example to receive data
