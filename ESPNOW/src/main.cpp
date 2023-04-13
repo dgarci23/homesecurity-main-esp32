@@ -39,6 +39,7 @@ void setup() {
 
   // Set the device as a Station and Soft Access Point simultaneously
   WiFi.mode(WIFI_STA);
+  Serial.println(WiFi.macAddress());
 
   // Init ESP-NOW
   if (esp_now_init() != ESP_OK) {
