@@ -9,12 +9,12 @@
 // Must match the sender structure
 typedef struct struct_message {
   int id;
-  bool battery;
+  int battery;
 } struct_message;
 
 struct_message incomingReadings;
 
-QueueHandle_t queue = xQueueCreate(10, sizeof(int));
+QueueHandle_t queue = xQueueCreate(10, sizeof(struct_message));
 
 // callback function that will be executed when data is received
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) { 
@@ -27,15 +27,13 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
   memcpy(&incomingReadings, incomingData, sizeof(incomingReadings));
   
   Serial.printf("Board ID %u: %u bytes\n %u battery\n", incomingReadings.id, len, incomingReadings.battery);
-  int id = incomingReadings.id;
-  id = (id << 1) | incomingReadings.battery;
-  xQueueSend(queue, &id, (TickType_t)0); 
+  xQueueSend(queue, &incomingReadings, (TickType_t)0); 
 }
 
 void setup() {
   // Initialize Serial Monitor
   Serial.begin(115200);
-  Wire.begin(12, 14);
+  Wire.begin(18, 19);
 
   // Set the device as a Station and Soft Access Point simultaneously
   WiFi.mode(WIFI_STA);
@@ -56,13 +54,14 @@ void loop() {
   static const unsigned long EVENT_INTERVAL_MS = 2000;
   if ((millis() - lastEventTime) > EVENT_INTERVAL_MS) {
     lastEventTime = millis();
-    int id;
+    struct_message message;
     if (uxQueueMessagesWaiting(queue)!=0) {
-      xQueueReceive(queue, &id, 0);
+      xQueueReceive(queue, &message, 0);
       Wire.beginTransmission(0x0a);
-      Wire.print(id);
+      Wire.print((char)message.id);
+      Wire.print((char)message.battery);
       Wire.endTransmission();
-      Serial.printf("I2C Transmission with ID: %x\n", id);
+      Serial.printf("I2C Transmission with ID: %x\n", message.id);
     }
   }
 }

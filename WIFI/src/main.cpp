@@ -40,7 +40,7 @@ void setup() {
   if(initWiFi()) {
     // I2C Setup
     Serial.printf("I2C Setup.\n");
-    Wire.begin(0x0a, 12, 14, 0U);
+    Wire.begin(0x0a, 18, 19, 0U);
     Wire.onReceive(receiveEvent);
   }
   else {
